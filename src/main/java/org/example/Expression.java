@@ -42,9 +42,9 @@ public class Expression {
         return true;
     }
 
-    public int calculate() throws Exception {
+    public int calculate() throws IncorrectExpressionException {
         if(!checkBrackets())
-            throw new Exception("Скобки");
+            throw new IncorrectExpressionException("В выражении некорректно проставлены скобки.");
 
         Stack<Character> signs=new Stack<>();  // скобки и арифметические знаки
         Stack<Integer> nums=new Stack<>();  // числа
@@ -52,32 +52,40 @@ public class Expression {
         for(int i=0;i<expression.length();++i){
             char symb=expression.charAt(i);
 
-            if(symb=='(' || symb=='[' || symb=='*'){
+            if(symb=='(' || symb=='[' || symb=='*' || symb=='+' || symb=='-'){
+                // условие некорректности
+                if((symb=='*' || symb=='+' || symb=='-') && i!=0 &&
+                        (expression.charAt(i-1)=='*' || expression.charAt(i-1)=='+' || expression.charAt(i-1)=='-'
+                         || expression.charAt(i-1)=='('|| expression.charAt(i-1)=='[')) {
+                    break;
+                }
                 signs.add(symb);
             }
-            else if(Character.isDigit(symb) && signs.size()!=0 && signs.peek()=='*'){
-                signs.pop();
-                int b=Integer.parseInt(symb+"");
-                int a=nums.pop();
-                nums.add(a*b);
-            }
+            // если это число
             else if(Character.isDigit(symb)){
-                nums.add(Integer.parseInt(symb+""));
+                StringBuilder number=new StringBuilder("");
+                // читаем цифры числа, если оно многоразрядное
+                while(i<expression.length() && Character.isDigit(expression.charAt(i))){
+                    number.append(expression.charAt(i));
+                    ++i;
+                }
+                --i;
+                int num=Integer.parseInt(number.toString());
+                // если перед полученным числом стоит умножение, то выполняем умножение
+                if(signs.size()!=0 && signs.peek()=='*') {
+                    signs.pop();
+                    int a = nums.pop();
+                    nums.add(a * num);
+                }
+                // иначе просто добавляем число
+                else{
+                    nums.add(num);
+                }
             }
-            else if((symb=='+' || symb=='-') && signs.size()!=0 && signs.peek()=='*'){
-                signs.pop();
-                int b=nums.pop();
-                int a=nums.pop();
-                nums.add(a*b);
-                if(symb=='+')
-                    signs.add('+');
-                else
-                    signs.add('-');
-            }
-            else if(symb=='+' || symb=='-'){
-                signs.add(symb);
-            }
+            // если это закрывающая скобка, то выполним вычисление всей скобки
             else if(symb==')'){
+                if(expression.charAt(i-1)=='*' || expression.charAt(i-1)=='+' || expression.charAt(i-1)=='-')
+                    break;
                 while(signs.peek()!='('){
                     int b=nums.pop();
                     int a=nums.pop();
@@ -90,6 +98,8 @@ public class Expression {
                     signs.pop();  // удаляем арифметический знак
                 }
                 signs.pop();  // удаляем открывающую скобку
+
+                // если перед нашим вновь добавленным числом стоит знак умножения, то выполним умножение
                 if(signs.size()!=0 && signs.peek()=='*'){
                     signs.pop();
                     int b=nums.pop();
@@ -97,7 +107,10 @@ public class Expression {
                     nums.add(a*b);
                 }
             }
+            // делаем то же самое для квадратной скобки
             else if(symb==']'){
+                if(expression.charAt(i-1)=='*' || expression.charAt(i-1)=='+' || expression.charAt(i-1)=='-')
+                    break;
                 while(signs.peek()!='['){
                     int b=nums.pop();
                     int a=nums.pop();
@@ -110,6 +123,8 @@ public class Expression {
                     signs.pop();  // удаляем арифметический знак
                 }
                 signs.pop();  // удаляем открывающую скобку
+
+                // если перед нашим вновь добавленным числом стоит знак умножения, то выполним умножение
                 if(signs.size()!=0 && signs.peek()=='*'){
                     signs.pop();
                     int b=nums.pop();
@@ -117,9 +132,12 @@ public class Expression {
                     nums.add(a*b);
                 }
             }
+            else{
+                break;
+            }
         }
-        System.out.println(nums.size()+" "+signs.size());
 
+        // выполняем вычисления всех оставшихся компонентов
         while(nums.size()>=2 && signs.size()>=1){
             int b=nums.pop();
             int a=nums.pop();
@@ -129,7 +147,7 @@ public class Expression {
                 nums.add(a-b);
         }
         if(signs.size()!=0 || nums.size()!=1)
-            throw new Exception("Данное выражение некорректно. Оно не может быть вычислено.");
+            throw new IncorrectExpressionException("Данное выражение некорректно. Оно не может быть вычислено.");
 
         return nums.peek();
     }
