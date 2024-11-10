@@ -53,8 +53,9 @@ public class Expression {
             char symb=expression.charAt(i);
 
             if(symb=='(' || symb=='[' || symb=='*' || symb=='+' || symb=='-'){
-                // условие некорректности
-                if((symb=='*' || symb=='+' || symb=='-') && i!=0 &&
+                // если арифметический знак в начале выражения или перед арифметическим знаком стоит не число
+                if(((symb=='*' || symb=='+' || symb=='-') && i==0) ||
+                        (symb=='*' || symb=='+' || symb=='-') && i!=0 &&
                         (expression.charAt(i-1)=='*' || expression.charAt(i-1)=='+' || expression.charAt(i-1)=='-'
                          || expression.charAt(i-1)=='('|| expression.charAt(i-1)=='[')) {
                     break;
@@ -132,11 +133,11 @@ public class Expression {
                     nums.add(a*b);
                 }
             }
+            // если встретили любой другой неизвестный символ
             else{
                 break;
             }
         }
-
         // выполняем вычисления всех оставшихся компонентов
         while(nums.size()>=2 && signs.size()>=1){
             int b=nums.pop();

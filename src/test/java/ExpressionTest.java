@@ -64,12 +64,17 @@ class ExpressionTest {
     }
     @Test
     void exception4(){
-        Expression expression=new Expression("1*(2 3)");
+        Expression expression=new Expression("1*@(2 3)");
         Assertions.assertThrows(IncorrectExpressionException.class, () -> expression.calculate());
     }
     @Test
     void exception5(){
         Expression expression=new Expression("[1*(2+3)");
+        Assertions.assertThrows(IncorrectExpressionException.class, () -> expression.calculate());
+    }
+    @Test
+    void exception6(){
+        Expression expression=new Expression("+[1*(2+3)");
         Assertions.assertThrows(IncorrectExpressionException.class, () -> expression.calculate());
     }
 
